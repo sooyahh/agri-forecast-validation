@@ -18,6 +18,7 @@
 - **Annual model selection with an abstain option:** each year's model is chosen on the previous year only, with a "predict zero, do not trade" candidate and purged partition boundaries.
 - **Execution-aware accounting:** signals fill at the next observed close, costs apply to both legs, and a hand-calculated ledger test checks entries, reversals and liquidation.
 - **Uncertainty and robustness:** paired block-bootstrap intervals, a doubled-cost scenario, and a weekdays-only calendar rerun.
+- **Data source audit:** each input traced to its producer where possible and compared with official releases; the audit also exposed problems in the exploratory features, such as a spliced dollar index and marketing-year quarters read as calendar quarters ([details](docs/data-sources.md)).
 
 ## Project evolution and contribution
 
@@ -92,7 +93,7 @@ Scripts write outputs under `results/`. For another input location, pass `--data
 
 ## Limitations
 
-- **Data provenance:** the price spreadsheets contain dates and values only. Provider, contract identifiers, roll rules and redistribution terms are still being traced, so raw inputs and row-level ledgers stay local and the historical results cannot be rerun from this repository alone.
+- **Data provenance:** the drought index, the only non-price input used for model selection and trading, matches the official U.S. Drought Monitor data service for all 6,078 state-week rows. The price spreadsheets only partially match public candidates (a Macrotrends-format archive and Yahoo Finance `ZC=F`/`ZS=F` closes), so their provider, contract months and roll rules remain unidentified. Raw inputs and row-level ledgers stay local, and the historical results cannot be rerun from this repository alone. See the [source-by-source audit](docs/data-sources.md).
 - **Simulation, not trading:** returns are simulated NAV changes on the supplied quote series. The 0.15% cost is an assumption; spreads, slippage, rolls, margin and financing are not modeled.
 - **Retrospective test:** the test period had already been examined during the coursework, and three entries are too few for any profitability inference.
 - **Selection bias toward GRU:** in the main run, GRU checkpoints and the annual model choice use the same validation year. This was checked with `walkforward.py --nested-selection`: each validation year is split by date, the earlier half picks GRU checkpoints, the later half compares the four models, and the boundary is purged. The headline conclusion is unchanged. On all dates, the selected strategy still returns **−2.17%** with **3 entries** (0 at 2× cost). Its MAE gain over the zero forecast is **−0.06 bp [−0.29, +0.16]**, compared with −0.10 bp [−0.33, +0.13] originally; neither shows a reliable edge. Some details did change. GRU was chosen in 2019 and 2020 but no longer in 2024, where the original GRU pick had a clearly negative MAE gain (−0.79 bp [−1.26, −0.32]); Zero was chosen instead. Model choices also moved from Zero to GB in 2022 and 2026. In the weekdays-only check, the simulated return fell from **−0.82% to −2.17%**, and entries fell from 4 to 3, because the 2023 GRU checkpoint no longer traded. Each half has only about 125 observations, so the nested choice is itself noisy. The bootstrap intervals also exclude model-refitting uncertainty. See [the comparison](results/nested/comparison.md).
