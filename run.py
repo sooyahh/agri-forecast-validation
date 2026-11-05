@@ -86,6 +86,8 @@ def finish(pred, quotes, out):
     lines = [
         "# 옥수수와 대두의 다음 관측일 가격예측",
         "",
+        "이 문서는 run.py가 생성한다.",
+        "",
         f"원본에서 두 품목의 양수 가격이 함께 관측된 날은 {len(quotes):,}일이다. 공통 테스트 목표일은 {pred.loc[pred.split == 'test', 'date'].min():%Y-%m-%d}부터 {pred.date.max():%Y-%m-%d}까지 {pred.loc[pred.split == 'test', 'date'].nunique():,}일이다. 기존 과제에서 이미 살펴본 기간을 포함한다.",
         "",
         "## 가격예측 결과",
@@ -184,7 +186,9 @@ def finish(pred, quotes, out):
             "모델별 전체·연도별 MAE와 RMSE, 기준 대비 개선율은 model_metrics.csv에, 거래 횟수·회전율·비용 민감도는 strategy_metrics.csv에 있다. exploratory는 발표 시점을 보장할 수 없는 자료를 사용한 진단용 비교이며 모델 선정 및 거래에서 제외했다.",
         ]
     )
-    (out / "보고서.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out / "single_split_report.ko.md").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8"
+    )
 
 
 def main():

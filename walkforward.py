@@ -185,6 +185,8 @@ def main():
     lines = [
         "# 체결 이후 수익률을 예측한 연도별 검증",
         "",
+        "이 문서는 walkforward.py가 생성한다.",
+        "",
         "오늘 마감에 다음 관측일의 체결을 결정하고, 그다음 관측일까지 보유한다. 목표값은 보유 구간 대두 수익률의 절반에서 옥수수 수익률의 절반을 뺀 값이다. 가격 이력과 공개 시점을 늦춘 가뭄 지수로 이를 예측한다.",
         "",
         "2018년부터 매년 전년 검증 MAE로 0 예측·Ridge·GB·GRU 중 하나를 선택하고 다음 해에 고정한다. 학습·검증 경계에는 목표가 다음 구간의 최초 신호 전에 확정된 행만 사용한다. 비용은 양쪽 포지션 변동액에 부과하며 연도 경계에서도 자본과 보유액을 이어간다.",
@@ -237,7 +239,9 @@ def main():
         "",
         f"선택 전략의 기본 비용 진입은 {counts[1]}회, 비용 2배 진입은 {counts[2]}회다. 거래 횟수가 적을수록 손익 재표집 구간의 해석이 제한된다.",
     ]
-    (out / "순차검증.md").write_text("\n".join(lines) + "\n", encoding="utf8")
+    (out / "annual_validation.ko.md").write_text(
+        "\n".join(lines) + "\n", encoding="utf8"
+    )
     plots.annual_figure(pd.read_csv(out / "walk_metrics.csv"), out)
 
 
