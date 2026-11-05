@@ -17,7 +17,7 @@ from trading import simulate, check_ledger
 ROOT = Path(__file__).resolve().parent
 
 
-def folds(q, folder):
+def folds(q, folder, nested=False):
     x, sets = features(folder, q)
     arr = x[sets["published"]].to_numpy()
     ends = np.arange(LOOKBACK - 1, len(q) - 2)
@@ -34,6 +34,16 @@ def folds(q, folder):
         val = (exit_date.year == year-1) & (exit_date < origin[test].min())
         train = (exit_date.year < year-1) & (exit_date < origin[val].min())
         assert exit_date[train].max() < origin[val].min() < exit_date[val].max() < origin[test].min()
+        stop_val, select_val = val, val
+        if nested:
+            # Earlier half of the validation year picks the GRU checkpoint; the later half
+            # compares the four models. Purge early-half labels that overlap the first later-half signal.
+            rows = np.flatnonzero(val)
+            select_val = np.zeros(len(seq), dtype=bool)
+            select_val[rows[len(rows)//2:]] = True
+            stop_val = val & ~select_val & (exit_date < origin[select_val].min())
+            assert (exit_date[train].max() < origin[stop_val].min() < exit_date[stop_val].max()
+                    < origin[select_val].min() < exit_date[select_val].max() < origin[test].min())
         preds = {"Zero": np.zeros(len(seq))}
         ridge = make_pipeline(StandardScaler(), Ridge(alpha=100)).fit(flat[train], actual[train])
         preds["Ridge"] = ridge.predict(flat)
@@ -41,15 +51,19 @@ def folds(q, folder):
                                        learning_rate=0.04,random_state=42)
         gb.fit(seq[train,-1],actual[train])
         preds["GB"] = gb.predict(seq[:,-1])
-        log_pred, epoch = train_gru(seq,np.log1p(actual),np.ones(len(seq)),train,val)
+        log_pred, epoch = train_gru(seq,np.log1p(actual),np.ones(len(seq)),train,stop_val)
         preds["GRU"] = np.expm1(log_pred)
-        choice = min(preds,key=lambda name: np.mean(abs(preds[name][val]-actual[val])))
+        choice = min(preds,key=lambda name: np.mean(abs(preds[name][select_val]-actual[select_val])))
         preds["Selected"] = preds[choice]
+        extra = {}
+        if nested:
+            extra = dict(stop_val_n=int(stop_val.sum()),stop_val_end=exit_date[stop_val].max(),
+                         select_val_n=int(select_val.sum()),select_val_start=origin[select_val].min())
         for model, p in preds.items():
             outputs.append(pd.DataFrame(dict(year=year,signal=origin[test],entry=entry[test],
                 exit=exit_date[test],actual=actual[test],prediction=p[test],model=model,
                 selected=choice,train_end=exit_date[train].max(),val_end=exit_date[val].max(),
-                gru_epoch=epoch)))
+                gru_epoch=epoch,**extra)))
     return pd.concat(outputs,ignore_index=True)
 
 
@@ -99,6 +113,10 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data",type=Path,default=ROOT/"data")
     parser.add_argument("--weekdays-only",action="store_true",help="Repeat all folds after excluding weekend observations")
+    parser.add_argument("--nested-selection",action="store_true",
+                        help="Split each validation year by date: earlier half for GRU checkpoints, later half for model choice")
+    parser.add_argument("--out",type=Path,default=None,
+                        help="Output folder (default results/, or results/nested/ with --nested-selection)")
     args=parser.parse_args()
     torch.set_num_threads(1)
     check_ledger()
@@ -107,8 +125,8 @@ def main():
     flat_count=int(q[["Soy","Corn"]].diff().eq(0).all(axis=1).sum())
     if args.weekdays_only:
         q=q.loc[q.index.weekday<5]
-    pred=folds(q,args.data)
-    out=ROOT/"results"
+    pred=folds(q,args.data,nested=args.nested_selection)
+    out=args.out or (ROOT/"results"/"nested" if args.nested_selection else ROOT/"results")
     if args.weekdays_only:
         out=out/"weekdays_only"
     out.mkdir(exist_ok=True,parents=True)
@@ -118,7 +136,8 @@ def main():
     summary=score.loc[(score.period=="all") & (score.model=="Selected")]
     lines=["# 체결 이후 수익률을 예측한 연도별 검증","",
            "오늘 마감에 다음 관측일의 체결을 결정하고, 그다음 관측일까지 보유한다. 목표값은 보유 구간 대두 수익률의 절반에서 옥수수 수익률의 절반을 뺀 값이다. 가격 이력과 공개 시점을 늦춘 가뭄 지수로 이를 예측한다.",
-           "", "2018년부터 매년 전년 검증 MAE로 0 예측·Ridge·GB·GRU 중 하나를 선택하고 다음 해에 고정한다. 학습·검증 경계에는 목표가 다음 구간의 최초 신호 전에 확정된 행만 사용한다. 비용은 양쪽 포지션 변동액에 부과하며 연도 경계에서도 자본과 보유액을 이어간다.",
+           "", "2018년부터 매년 전년 검증 MAE로 0 예측·Ridge·GB·GRU 중 하나를 선택하고 다음 해에 고정한다. 학습·검증 경계에는 목표가 다음 구간의 최초 신호 전에 확정된 행만 사용한다. 비용은 양쪽 포지션 변동액에 부과하며 연도 경계에서도 자본과 보유액을 이어간다."+
+           (" 중첩 선택: 전년 검증 구간을 날짜순으로 반분해 앞 절반은 GRU 체크포인트 선택에만, 뒤 절반은 네 모델 비교에만 쓴다. 앞 절반 중 목표가 뒤 절반 첫 신호 이후에 확정되는 행은 제외한다." if args.nested_selection else ""),
            "", "|비용|누적 모의수익률|95% 구간|최대낙폭|0 예측 대비 MAE 개선 (bp)|95% 구간 (bp)|",
            "|---|---:|---:|---:|---:|---:|"]
     for r in summary.itertuples():
