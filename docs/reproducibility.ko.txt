@@ -1,0 +1,6 @@
+Windows / CPython 3.11.9 / CPU
+새 venv(include-system-site-packages=false)에 requirements.txt를 설치했다. pip check 통과. 실제 설치 버전은 requirements-win311.lock에 기록했다.
+같은 입력 파일로 run.py, verify.py, walkforward.py를 독립 작업 폴더에서 실행했다.
+기존 예측표 161,892행 일치. 기존 전략 지표 일치. 기존 모델 지표 최대 절대 차이 약 2.7e-13.
+미래 입력 변형 후 이전 예측 148,824개 일치.
+새 환경의 순차 예측, 손익 원장, 성능표를 원래 환경의 결과와 비교해 rtol=atol=1e-8 이내 일치를 확인했다.
