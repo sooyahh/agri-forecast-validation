@@ -7,7 +7,7 @@ Historical inputs are excluded from version control because provenance and redis
 | corn_price.xlsx | Date, Value |
 | soybean_price.xlsx | Date, Value |
 | drought_data.csv | Name, MapDate, DSCI |
-| final_features_for_DL (2).csv | Date, Corn_Condition, Soy_Condition, Corn_Stock_Ratio, Bean_Stock_Ratio, Fuel_alcohol_use, Percent, fertilizer_price($/mt), WTI_Price, BDI, Dollar_Index |
+| exploratory_features.csv | Date, Corn_Condition, Soy_Condition, Corn_Stock_Ratio, Bean_Stock_Ratio, Fuel_alcohol_use, Percent, fertilizer_price($/mt), WTI_Price, BDI, Dollar_Index |
 
 Price Date values are Excel serial days using origin 1899-12-30. MapDate is YYYYMMDD and represents a Tuesday. All other dates use ISO YYYY-MM-DD. The combined CSV supplies exploratory features whose release timestamps are unverified.
 

@@ -41,7 +41,7 @@ def main():
         ]
         merged = pd.DataFrame({name: 1.0 for name in extra}, index=dates)
         merged.index.name = "Date"
-        merged.to_csv(folder / "final_features_for_DL (2).csv")
+        merged.to_csv(folder / "exploratory_features.csv")
         q = prices(folder)
         x, sets = features(folder, q)
         future = q.copy()

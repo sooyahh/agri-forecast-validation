@@ -47,7 +47,7 @@ def features(folder, quotes):
     x["DSCI"] = drought.reindex(x.index, method="ffill")
     drought_cols = price_cols + ["DSCI"]
     merged = pd.read_csv(
-        folder / "final_features_for_DL (2).csv", parse_dates=["Date"]
+        folder / "exploratory_features.csv", parse_dates=["Date"]
     ).set_index("Date")
     extra = [
         "Corn_Condition",
