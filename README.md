@@ -1,20 +1,32 @@
 # Agricultural Forecast Validation
 
+[![Executable checks](https://github.com/sooyahh/agri-forecast-validation/actions/workflows/checks.yml/badge.svg)](https://github.com/sooyahh/agri-forecast-validation/actions/workflows/checks.yml)
+
 **Do corn and soybean price forecasts beat a persistence baseline, and does any predictive edge survive delayed execution and assumed trading costs?**
 
-**Origin:** Ajou University · **Financial Deep Learning** · **Spring 2026 (first semester)** · group course project  
-**This repository:** A subsequent, portfolio-oriented extension focused on time-series validation, information timing, simulated two-leg accounting, and reproducibility.
+**Origin:** Ajou University · **Financial Deep Learning** · **Spring 2026 (first semester)** · group course project (analysis and implementation by me)  
+**This repository:** My individual extension of that project, focused on time-series validation, information timing, simulated two-leg accounting, and reproducibility.
 
-> **Main takeaway:** More complex forecasting models did not consistently beat persistence. Under annual out-of-sample model selection, the simulated strategy had very few entries and a negative net result. The contribution of this study is its validation and failure analysis—not a claim of a profitable or executable futures strategy.
+> **Main takeaway:** More complex forecasting models did not beat persistence. When the model was chosen each year using only earlier data, the simulated strategy traded in only one of nine years, entered 3 times, and ended at −2.17%. The value of this study is the validation and failure analysis, not a profitable strategy.
+
+![Annual out-of-sample validation](results/annual_validation.png)
+
+## What this project demonstrates
+
+- **Look-ahead test:** `verify.py` alters all prices and features from 2025 onward, refits every model, and confirms that all 148,824 earlier forecasts are unchanged.
+- **Information timing audit:** the drought index is used only seven days after its Tuesday observation date; inputs without verifiable release dates are kept as diagnostics and excluded from model selection and trading.
+- **Annual model selection with an abstain option:** each year's model is chosen on the previous year only, with a "predict zero, do not trade" candidate and purged partition boundaries.
+- **Execution-aware accounting:** signals fill at the next observed close, costs apply to both legs, and a hand-calculated ledger test checks entries, reversals and liquidation.
+- **Uncertainty and robustness:** paired block-bootstrap intervals, a doubled-cost scenario, and a weekdays-only calendar rerun.
 
 ## Project evolution and contribution
 
 | Stage | Scope |
 |---|---|
-| **Original coursework (Spring 2026)** | Group assignment in Financial Deep Learning at Ajou University, studying corn and soybean forecasts and related strategy comparisons. |
-| **Subsequent repository extension** | Reworked the evaluation around observed-date alignment, information availability, annual model selection, an execution-delayed return proxy, transaction-cost scenarios, uncertainty estimates, and reproducibility checks. |
+| **Original coursework (Spring 2026)** | Registered as a four-person group assignment in Financial Deep Learning at Ajou University. I carried out the coursework's data processing, modeling and analysis. |
+| **This repository (individual)** | I reworked the evaluation around observed-date alignment, information availability, annual model selection, an execution-delayed return proxy, transaction-cost scenarios, uncertainty estimates and reproducibility checks. |
 
-The original assignment was **team work**. The follow-up implementation and validation documented here were developed with **AI coding assistance** and checked against executable tests and recorded outputs. This distinction describes the project's history; it does not imply that the original group assignment was individual work.
+I designed the validation and implemented it with AI coding assistants. Every reported number is checked against executable tests and recorded outputs.
 
 ## What was tested
 
@@ -25,30 +37,20 @@ The original assignment was **team work**. The follow-up implementation and vali
 
 ## Findings
 
-**Forecast accuracy:** In the 2023–May 2026 price-forecast test window, persistence had the lowest test MAE for corn, soybeans, and their price ratio. A model that appears more sophisticated does not necessarily provide a usable predictive improvement.
+**Forecast accuracy:** In the 2023–May 2026 price-forecast test window, persistence had the lowest test MAE for corn, soybeans, and their price ratio. Adding the delayed drought index did not change that.
 
-**Model selection and simulated trading:** The annual validation-selected strategy had **−2.17% simulated net return** under the base cost assumption, with only **3 entries**. Doubling the assumed cost and its linked entry threshold resulted in **no entries**. These are outcomes of a constructed price-series simulation, **not verified futures-trading returns**.
+![Test MAE relative to persistence](results/test_mae_vs_persistence.png)
 
-**Uncertainty:** Relative to predicting zero two-leg holding return, the selected forecasts had a paired-bootstrap MAE advantage of **−0.10 bp** (95% interval **[−0.33, +0.13] bp**). This does not establish a reliable forecasting advantage; the interval does not incorporate model-refitting uncertainty.
+**Model selection and simulated trading:** The annual validation-selected strategy had a **−2.17% simulated net return** under the base cost assumption, with only **3 entries**, all in 2021. Doubling the assumed cost and its linked entry threshold resulted in **no entries**.
+
+**Uncertainty:** Relative to predicting a zero two-leg holding return, the selected forecasts had a paired-bootstrap MAE advantage of **−0.10 bp** (95% interval **[−0.33, +0.13] bp**), so there is no reliable forecasting advantage.
 
 | Additional check | Observed result |
 |---|---|
-| Exclude 7 weekend observations, retrain and reselect | **−0.82% simulated net return** for the selected strategy |
-| Original single-split study: best directional strategy *chosen after viewing the test results* | **+3.34% simulated net return** (post-hoc comparison, not an unbiased selected-strategy estimate) |
+| Exclude 7 weekend observations, retrain and reselect | **−0.82%** simulated net return for the selected strategy |
+| Original single-split study: best directional strategy *chosen after viewing the test results* | **+3.34%** simulated net return (post-hoc, not an unbiased estimate) |
 
-The original single-split study and the annual extension **use different prediction targets and evaluation periods**. Their returns must not be interpreted as a controlled before/after improvement.
-
-![Forecast accuracy relative to persistence](results/accuracy.png)
-
-## Financial interpretation: a research simulation, not an executable futures strategy
-
-The supplied price spreadsheets provide dates and values but do **not** document the provider, instrument/contract identifiers, units, continuous-contract construction, roll rules, price adjustments, or redistribution terms. Therefore, observed price changes cannot be confidently mapped to returns on identifiable tradable futures positions. Some observations occur on weekends or repeat earlier quotes.
-
-The backtest assumes a hypothetical equal-gross-weight soy-long/corn-short pair (with the sign reversed for short signals), next-observation-close execution, rebalancing and terminal liquidation. The **0.15% base fee per traded notional amount** is a scenario assumption, not an observed execution cost. Actual fills, bid–ask spreads, slippage, contract rolls, margin, financing and borrow/position constraints are not reconstructed.
-
-**Interpretation boundary:** Reported percentages describe the model's **simulated NAV changes on the supplied quote series** under those assumptions. They are **not realized P&L, investable futures returns, or evidence of profitability**. The historical test period had already been examined during the coursework, so this extension is retrospective rather than a fresh untouched out-of-sample claim. Three entries are too few to support a stable profitability inference.
-
-**Open data limitation:** Source provenance and contract construction remain unresolved. These should be verified before making instrument-level financial claims; no provider or contract specification is assumed here.
+The single-split study and the annual extension use different prediction targets and evaluation periods, so their returns are not a controlled before/after comparison.
 
 ## Methodology
 
@@ -57,7 +59,7 @@ The backtest assumes a hypothetical equal-gross-weight soy-long/corn-short pair 
 - **Forecast evaluation** — fit scalers on training inputs, select GRU checkpoints using validation MAE, and compare models on common target dates.
 - **Execution-aligned proxy** — generate a signal after close at time `t`; assume execution at the following observed close. Predict the equal-weight pair's return over the *subsequent* close-to-close period.
 - **Annual validation** — for each test year from 2018, train using prior years, select using the previous year, and evaluate on that year. Purge labels overlapping the next partition's first signal.
-- **Simulated accounting** — equal gross leg weights, drift-aware rebalancing, assumed costs on both legs, and terminal liquidation.
+- **Simulated accounting** — equal gross leg weights, drift-aware rebalancing, assumed costs on both legs (0.15% of traded notional per leg in the base case), and terminal liquidation.
 - **Uncertainty** — paired circular blocks of 20 observations, 2,000 resamples. Intervals condition on the fitted models and observed quote series.
 
 ## Run
@@ -69,9 +71,10 @@ python -m venv .venv
 # Activate the virtual environment, then:
 python -m pip install -r requirements.txt
 python smoke.py
+python plots.py
 ```
 
-`smoke.py` creates deterministic synthetic inputs in a temporary directory and checks the price calendar, causal features, sequence preparation and trading arithmetic. **Passing this smoke check does not reproduce the historical performance tables.**
+`smoke.py` creates deterministic synthetic inputs in a temporary directory and checks the price calendar, causal features, sequence preparation and trading arithmetic. It does not reproduce the historical performance tables. `plots.py` redraws the README figures from the committed aggregate results.
 
 For the historical experiments, place locally held source files in `data/` following [the input contract](data/README.md), then run:
 
@@ -82,7 +85,14 @@ python walkforward.py
 python walkforward.py --weekdays-only
 ```
 
-Scripts write outputs under `results/`. For another input location, pass `--data PATH`. The full Windows/Python 3.11 dependency snapshot is `requirements-win311.lock`. Original historical data and row-level prediction ledgers are kept local due to unresolved provenance and redistribution terms, so cloning this repository alone does **not** reproduce historical results.
+Scripts write outputs under `results/`. For another input location, pass `--data PATH`. The full Windows/Python 3.11 dependency snapshot is `requirements-win311.lock`.
+
+## Limitations
+
+- **Data provenance:** the price spreadsheets contain dates and values only. Provider, contract identifiers, roll rules and redistribution terms are still being traced, so raw inputs and row-level ledgers stay local and the historical results cannot be rerun from this repository alone.
+- **Simulation, not trading:** returns are simulated NAV changes on the supplied quote series. The 0.15% cost is an assumption; spreads, slippage, rolls, margin and financing are not modeled.
+- **Retrospective test:** the test period had already been examined during the coursework, and three entries are too few for any profitability inference.
+- **Selection bias toward GRU:** GRU checkpoints and the annual model choice both use the same validation year, which can make GRU's validation error look better than it is. The bootstrap intervals also exclude model-refitting uncertainty.
 
 ## Results and supporting documentation
 
@@ -92,3 +102,7 @@ Scripts write outputs under `results/`. For another input location, pass `--data
 - [Independent-environment reproduction record — Korean](docs/reproducibility.ko.txt)
 - [Annual metrics](results/walk_metrics.csv) and [weekdays-only sensitivity](results/walk_metrics_weekdays.csv)
 - [Single-split forecast and strategy comparison](results/forecast_vs_strategy.csv)
+
+## License
+
+[MIT](LICENSE)
