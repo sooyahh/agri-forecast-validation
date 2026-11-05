@@ -12,6 +12,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import GradientBoostingRegressor
 
+import plots
 from forecast import prices, features, train_gru, LOOKBACK
 from trading import simulate, check_ledger, BASE_FEE, ENTRY_FEE_MULTIPLE
 
@@ -237,6 +238,7 @@ def main():
         f"선택 전략의 기본 비용 진입은 {counts[1]}회, 비용 2배 진입은 {counts[2]}회다. 거래 횟수가 적을수록 손익 재표집 구간의 해석이 제한된다.",
     ]
     (out / "순차검증.md").write_text("\n".join(lines) + "\n", encoding="utf8")
+    plots.annual_figure(pd.read_csv(out / "walk_metrics.csv"), out)
 
 
 if __name__ == "__main__":

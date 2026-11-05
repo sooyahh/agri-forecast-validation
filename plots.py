@@ -3,8 +3,10 @@
 Usage: python plots.py
 Reads results/walk_metrics.csv and results/model_metrics.csv, writes
 results/annual_validation.png and results/test_mae_vs_persistence.png.
+run.py and walkforward.py call the same functions after writing their tables.
 """
 
+from functools import wraps
 from pathlib import Path
 
 import matplotlib
@@ -22,20 +24,29 @@ SERIES = {"price": "#2a78d6", "published": "#eb6834"}
 SELECTED = "#2a78d6"
 MODEL_NAMES = {"GB": "GB", "GRU": "GRU", "Ridge": "Ridge", "Zero": "Zero"}
 
-plt.rcParams.update(
-    {
-        "font.size": 10,
-        "axes.edgecolor": INK_2,
-        "axes.labelcolor": INK_2,
-        "xtick.color": INK_2,
-        "ytick.color": INK_2,
-        "axes.titlecolor": INK,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "figure.facecolor": "white",
-        "axes.facecolor": "white",
-    }
-)
+STYLE = {
+    "font.size": 10,
+    "axes.edgecolor": INK_2,
+    "axes.labelcolor": INK_2,
+    "xtick.color": INK_2,
+    "ytick.color": INK_2,
+    "axes.titlecolor": INK,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "figure.facecolor": "white",
+    "axes.facecolor": "white",
+}
+
+
+def styled(draw):
+    """Apply STYLE only while drawing, so importing plots leaves other figures alone."""
+
+    @wraps(draw)
+    def wrapper(*args, **kwargs):
+        with plt.rc_context(STYLE):
+            return draw(*args, **kwargs)
+
+    return wrapper
 
 
 def selected_models(walk):
@@ -56,7 +67,8 @@ def selected_models(walk):
     return chosen
 
 
-def annual_figure(walk):
+@styled
+def annual_figure(walk, out=OUT):
     chosen = selected_models(walk)
     sel = walk.loc[
         (walk.model == "Selected") & (walk.cost_multiple == 1) & (walk.period != "all")
@@ -133,11 +145,12 @@ def annual_figure(walk):
         color=INK_2,
     )
 
-    fig.savefig(OUT / "annual_validation.png", dpi=150)
+    fig.savefig(out / "annual_validation.png", dpi=150)
     plt.close(fig)
 
 
-def accuracy_figure(metrics):
+@styled
+def accuracy_figure(metrics, out=OUT):
     test = metrics.loc[
         (metrics.split == "test")
         & (metrics.period == "all")
@@ -198,7 +211,7 @@ def accuracy_figure(metrics):
         fontsize=11,
         color=INK,
     )
-    fig.savefig(OUT / "test_mae_vs_persistence.png", dpi=150)
+    fig.savefig(out / "test_mae_vs_persistence.png", dpi=150)
     plt.close(fig)
 
 

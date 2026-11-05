@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import plots
 from forecast import run, prices, TARGETS
 from trading import strategies, check_ledger
 
@@ -72,21 +73,7 @@ def finish(pred, quotes, out):
         validate="many_to_one",
     )
     joined.to_csv(out / "forecast_vs_strategy.csv", index=False)
-    fig, axes = plt.subplots(3, 1, figsize=(10, 9), layout="constrained")
-    for ax, target in zip(axes, TARGETS):
-        t = tests.loc[tests.target == target]
-        for variant, frame in t.groupby("variant"):
-            ax.plot(
-                frame.model.sort_values(),
-                frame.set_index("model").sort_index().improvement_pct,
-                "o-",
-                label=variant,
-            )
-        ax.axhline(0, color="gray", lw=1)
-        ax.set_title(target + " | test MAE improvement vs persistence (%)")
-        ax.legend()
-    fig.savefig(out / "accuracy.png", dpi=140)
-    plt.close(fig)
+    plots.accuracy_figure(m, out)
     fig, ax = plt.subplots(figsize=(9, 4), layout="constrained")
     for (model, rule), frame in ledger.loc[
         (ledger.variant == "published") & (ledger.cost_multiple == 1)
