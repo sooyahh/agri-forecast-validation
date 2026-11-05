@@ -9,6 +9,13 @@
 
 > **Main takeaway:** More complex forecasting models did not beat persistence. When the model was chosen each year using only earlier data, the simulated strategy traded in only one of nine years, entered 3 times, and ended at −2.17%. The value of this study is the validation and failure analysis, not a profitable strategy.
 
+**한국어 요약** — 아주대 2026-1학기 '금융딥러닝' 4인 조별과제(분석·구현 본인)를 개인적으로 확장한 시계열 검증 연구입니다.
+
+- 옥수수·대두 가격 예측에서 Ridge, Gradient Boosting, GRU 모두 직전 가격을 그대로 쓰는 기준(persistence)보다 오차가 작지 않았습니다.
+- 매년 이전 데이터로만 모델을 고르게 하자 모의 전략은 9년 중 1년만 거래했고(진입 3회) 누적 −2.17%였습니다. 원 과제의 +3.34%는 테스트 결과를 본 뒤 고른 값이며, 두 실험은 목표와 기간이 달라 직접 비교하지 않습니다.
+- 데이터 공개 시점 감사, 미래 데이터를 바꿔도 과거 예측 148,824개가 그대로인지 보는 누수 검사, 비용을 반영한 체결 회계, 입력 데이터 출처 감사를 설계하고 구현했습니다.
+- 한국어 상세 문서: [연도별 검증 보고서](docs/annual_validation.ko.md) · [방법론](docs/methodology.ko.md) · [단일 분할 보고서](docs/single_split_report.ko.md)
+
 ![Annual out-of-sample validation](results/annual_validation.png)
 
 ## What this project demonstrates
