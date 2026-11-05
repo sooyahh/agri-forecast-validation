@@ -99,8 +99,8 @@ Scripts write outputs under `results/`. For another input location, pass `--data
 
 ## Results and supporting documentation
 
-- [Annual validation report — Korean](docs/순차검증.md)
-- [Original price and strategy evaluation — Korean](docs/보고서.md)
+- [Annual validation report — Korean](docs/annual_validation.ko.md)
+- [Original price and strategy evaluation — Korean](docs/single_split_report.ko.md)
 - [Detailed methodology — Korean](docs/methodology.ko.md)
 - [Independent-environment reproduction record — Korean](docs/reproducibility.ko.txt)
 - [Annual metrics](results/walk_metrics.csv) and [weekdays-only sensitivity](results/walk_metrics_weekdays.csv)
