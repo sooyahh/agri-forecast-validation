@@ -4,8 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import torch
-from torch import nn
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import Ridge
 from sklearn.ensemble import GradientBoostingRegressor
@@ -51,24 +49,33 @@ def features(folder, quotes):
     return x, {"price": price_cols, "published": drought_cols, "exploratory": drought_cols + extra}
 
 
-class GRU(nn.Module):
-    def __init__(self, width):
-        super().__init__()
-        self.encoder = nn.GRU(width, 24, batch_first=True)
-        self.head = nn.Sequential(nn.LayerNorm(24), nn.Dropout(0.15), nn.Linear(24, 1))
+def make_gru(width):
+    # torch is imported only when a GRU is built, so price/feature code runs without it.
+    from torch import nn
 
-    def forward(self, x):
-        return self.head(self.encoder(x)[0][:, -1]).flatten()
+    class GRU(nn.Module):
+        def __init__(self, width):
+            super().__init__()
+            self.encoder = nn.GRU(width, 24, batch_first=True)
+            self.head = nn.Sequential(nn.LayerNorm(24), nn.Dropout(0.15), nn.Linear(24, 1))
+
+        def forward(self, x):
+            return self.head(self.encoder(x)[0][:, -1]).flatten()
+
+    return GRU(width)
 
 
 def train_gru(seq, change, base, train, val):
+    import torch
+    from torch import nn
+
     torch.manual_seed(42)
     # Normalize with training inputs only. Targets are log changes, scored in price units.
     scaler = StandardScaler().fit(seq[train].reshape(-1, seq.shape[-1]))
     inputs = torch.tensor(scaler.transform(seq.reshape(-1, seq.shape[-1])).reshape(seq.shape), dtype=torch.float32)
     scale = change[train].std()
     y = torch.tensor(change / scale, dtype=torch.float32)
-    model = GRU(seq.shape[-1])
+    model = make_gru(seq.shape[-1])
     opt = torch.optim.AdamW(model.parameters(), lr=0.001)
     best, best_epoch, weights = np.inf, 0, None
     for epoch in range(1, 26):
@@ -95,6 +102,8 @@ def train_gru(seq, change, base, train, val):
 
 
 def run(folder):
+    import torch
+
     torch.set_num_threads(1)
     quotes = prices(folder)
     x, sets = features(folder, quotes)
