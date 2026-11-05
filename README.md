@@ -18,6 +18,7 @@
 - **Annual model selection with an abstain option:** each year's model is chosen on the previous year only, with a "predict zero, do not trade" candidate and purged partition boundaries.
 - **Execution-aware accounting:** signals fill at the next observed close, costs apply to both legs, and a hand-calculated ledger test checks entries, reversals and liquidation.
 - **Uncertainty and robustness:** paired block-bootstrap intervals, a doubled-cost scenario, and a weekdays-only calendar rerun.
+- **Data source audit:** each input traced to its producer where possible and compared with official releases; the audit also exposed problems in the exploratory features, such as a spliced dollar index and marketing-year quarters read as calendar quarters ([details](docs/data-sources.md)).
 
 ## Project evolution and contribution
 
@@ -89,7 +90,7 @@ Scripts write outputs under `results/`. For another input location, pass `--data
 
 ## Limitations
 
-- **Data provenance:** the price spreadsheets contain dates and values only. Provider, contract identifiers, roll rules and redistribution terms are still being traced, so raw inputs and row-level ledgers stay local and the historical results cannot be rerun from this repository alone.
+- **Data provenance:** the drought index, the only non-price input used for model selection and trading, matches the official U.S. Drought Monitor data service for all 6,078 state-week rows. The price spreadsheets only partially match public candidates (a Macrotrends-format archive and Yahoo Finance `ZC=F`/`ZS=F` closes), so their provider, contract months and roll rules remain unidentified. Raw inputs and row-level ledgers stay local, and the historical results cannot be rerun from this repository alone. See the [source-by-source audit](docs/data-sources.md).
 - **Simulation, not trading:** returns are simulated NAV changes on the supplied quote series. The 0.15% cost is an assumption; spreads, slippage, rolls, margin and financing are not modeled.
 - **Retrospective test:** the test period had already been examined during the coursework, and three entries are too few for any profitability inference.
 - **Selection bias toward GRU:** GRU checkpoints and the annual model choice both use the same validation year, which can make GRU's validation error look better than it is. The bootstrap intervals also exclude model-refitting uncertainty.
