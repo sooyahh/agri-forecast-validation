@@ -55,10 +55,15 @@ I designed the validation and implemented it with AI coding assistants. Every re
 
 ## What was tested
 
+<details>
+<summary>펼쳐 보기</summary>
+
 1. **Price prediction:** Compare persistence, Ridge, Gradient Boosting, and GRU for next-observation corn, soybean, and soy/corn ratio prices.
 2. **Information timing:** Use historical price features and a conservatively delayed drought index; treat variables without verifiable release dates as diagnostic only.
 3. **Simulation after model selection:** Select models using earlier periods, predict a two-leg holding-return proxy, delay assumed fills until the next observed close, and account for assumed rebalancing costs.
 4. **Robustness and uncertainty:** Check a weekdays-only calendar, doubled-cost scenario, and paired block-bootstrap error intervals.
+
+</details>
 
 ## Findings
 
@@ -79,6 +84,9 @@ The single-split study and the annual extension use different prediction targets
 
 ## Methodology
 
+<details>
+<summary>펼쳐 보기</summary>
+
 - **Observed dates** — intersect the two source price files and retain positive prices on shared dates.
 - **Information timing** — use trailing features; delay drought data by seven days after its Tuesday observation date. Inputs with unverified release dates are *exploratory diagnostics*, not trading inputs.
 - **Forecast evaluation** — fit scalers on training inputs, select GRU checkpoints using validation MAE, and compare models on common target dates.
@@ -87,7 +95,12 @@ The single-split study and the annual extension use different prediction targets
 - **Simulated accounting** — equal gross leg weights, drift-aware rebalancing, assumed costs on both legs (0.15% of traded notional per leg in the base case), and terminal liquidation.
 - **Uncertainty** — paired circular blocks of 20 observations, 2,000 resamples. Intervals condition on the fitted models and observed quote series.
 
+</details>
+
 ## Run
+
+<details>
+<summary>펼쳐 보기</summary>
 
 Tested on Windows with Python 3.11.9 and CPU PyTorch.
 
@@ -115,6 +128,8 @@ python compare_nested.py
 
 Scripts write outputs under `results/`. For another input location, pass `--data PATH`. The full Windows/Python 3.11 dependency snapshot is `requirements-win311.lock`.
 
+</details>
+
 ## Limitations
 
 - **Data provenance:** the drought index, the only non-price input used for model selection and trading, matches the official U.S. Drought Monitor data service for all 6,078 state-week rows. The price spreadsheets only partially match public candidates (a Macrotrends-format archive and Yahoo Finance `ZC=F`/`ZS=F` closes), so their provider, contract months and roll rules remain unidentified. Raw inputs and row-level ledgers stay local, and the historical results cannot be rerun from this repository alone. See the [source-by-source audit](docs/data-sources.md).
@@ -124,12 +139,17 @@ Scripts write outputs under `results/`. For another input location, pass `--data
 
 ## Results and supporting documentation
 
+<details>
+<summary>펼쳐 보기</summary>
+
 - [Annual validation report — Korean](docs/annual_validation.ko.md)
 - [Original price and strategy evaluation — Korean](docs/single_split_report.ko.md)
 - [Detailed methodology — Korean](docs/methodology.ko.md)
 - [Independent-environment reproduction record — Korean](docs/reproducibility.ko.txt)
 - [Annual metrics](results/walk_metrics.csv) and [weekdays-only sensitivity](results/walk_metrics_weekdays.csv)
 - [Single-split forecast and strategy comparison](results/forecast_vs_strategy.csv)
+
+</details>
 
 ## License
 
