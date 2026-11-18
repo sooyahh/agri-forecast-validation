@@ -18,6 +18,23 @@
 
 ![Annual out-of-sample validation](results/annual_validation.png)
 
+## 내가 내린 판단 (Key decisions)
+
+**1. 수익이 난 숫자 대신 정직한 숫자를 결론으로 삼았습니다.**
+원 과제에서는 +3.34%의 모의 수익이 나왔지만, 이는 테스트 결과를 본 뒤 고른 전략이라 실제 성과로 볼 수 없었습니다. 그래서 매년 이전 데이터만으로 모델을 고르는 방식으로 다시 검증했고, 그 결과인 −2.17%(9년 중 3회 진입)를 이 저장소의 결론으로 썼습니다.
+
+**2. 가장 단순한 기준선부터 이겨야 한다고 봤습니다.**
+가격 예측에서 "직전 가격을 그대로 쓰는 것(persistence)"은 이기기 어려운 기준선입니다. Ridge, Gradient Boosting, GRU를 모두 이 기준선과 같은 날짜에서 비교했고, 어느 모델도 오차가 더 작지 않다는 결과를 그대로 보고했습니다.
+
+**3. 그날 실제로 알 수 있었던 정보만 쓰게 했습니다.**
+과거 데이터로 검증할 때 가장 흔한 실수는, 당시에는 아직 공개되지 않은 정보를 모델이 쓰게 되는 것입니다. 가뭄 지수는 화요일 관측 후 7일이 지나서야 쓰게 했고, 공개 시점을 확인할 수 없는 변수는 모델 선택과 거래에서 빼고 진단용으로만 남겼습니다.
+
+**4. 누수 여부를 사람의 주의가 아니라 테스트로 확인했습니다.**
+2025년 이후의 가격과 특징을 모두 바꾼 뒤 모델을 다시 학습해도, 그 이전의 예측 148,824개가 하나도 바뀌지 않는지 확인하는 검사(`verify.py`)를 만들었습니다. 미래 정보가 섞였다면 이 검사가 실패합니다.
+
+**5. 실제로 거래한다면 생길 비용과 지연을 넣었습니다.**
+신호가 나온 날 바로 체결된다고 가정하면 수익이 과장됩니다. 체결은 다음 관측 종가로 미루고 양쪽 거래에 비용을 붙였으며, 비용을 두 배로 늘린 시나리오도 함께 돌렸습니다.
+
 ## What this project demonstrates
 
 - **Look-ahead test:** `verify.py` alters all prices and features from 2025 onward, refits every model, and confirms that all 148,824 earlier forecasts are unchanged.
@@ -38,10 +55,15 @@ I designed the validation and implemented it with AI coding assistants. Every re
 
 ## What was tested
 
+<details>
+<summary>Details (펼쳐 보기)</summary>
+
 1. **Price prediction:** Compare persistence, Ridge, Gradient Boosting, and GRU for next-observation corn, soybean, and soy/corn ratio prices.
 2. **Information timing:** Use historical price features and a conservatively delayed drought index; treat variables without verifiable release dates as diagnostic only.
 3. **Simulation after model selection:** Select models using earlier periods, predict a two-leg holding-return proxy, delay assumed fills until the next observed close, and account for assumed rebalancing costs.
 4. **Robustness and uncertainty:** Check a weekdays-only calendar, doubled-cost scenario, and paired block-bootstrap error intervals.
+
+</details>
 
 ## Findings
 
@@ -62,6 +84,9 @@ The single-split study and the annual extension use different prediction targets
 
 ## Methodology
 
+<details>
+<summary>Details (펼쳐 보기)</summary>
+
 - **Observed dates** — intersect the two source price files and retain positive prices on shared dates.
 - **Information timing** — use trailing features; delay drought data by seven days after its Tuesday observation date. Inputs with unverified release dates are *exploratory diagnostics*, not trading inputs.
 - **Forecast evaluation** — fit scalers on training inputs, select GRU checkpoints using validation MAE, and compare models on common target dates.
@@ -70,7 +95,12 @@ The single-split study and the annual extension use different prediction targets
 - **Simulated accounting** — equal gross leg weights, drift-aware rebalancing, assumed costs on both legs (0.15% of traded notional per leg in the base case), and terminal liquidation.
 - **Uncertainty** — paired circular blocks of 20 observations, 2,000 resamples. Intervals condition on the fitted models and observed quote series.
 
+</details>
+
 ## Run
+
+<details>
+<summary>Details (펼쳐 보기)</summary>
 
 Tested on Windows with Python 3.11.9 and CPU PyTorch.
 
@@ -98,6 +128,8 @@ python compare_nested.py
 
 Scripts write outputs under `results/`. For another input location, pass `--data PATH`. The full Windows/Python 3.11 dependency snapshot is `requirements-win311.lock`.
 
+</details>
+
 ## Limitations
 
 - **Data provenance:** the drought index, the only non-price input used for model selection and trading, matches the official U.S. Drought Monitor data service for all 6,078 state-week rows. The price spreadsheets only partially match public candidates (a Macrotrends-format archive and Yahoo Finance `ZC=F`/`ZS=F` closes), so their provider, contract months and roll rules remain unidentified. Raw inputs and row-level ledgers stay local, and the historical results cannot be rerun from this repository alone. See the [source-by-source audit](docs/data-sources.md).
@@ -107,12 +139,17 @@ Scripts write outputs under `results/`. For another input location, pass `--data
 
 ## Results and supporting documentation
 
+<details>
+<summary>Details (펼쳐 보기)</summary>
+
 - [Annual validation report — Korean](docs/annual_validation.ko.md)
 - [Original price and strategy evaluation — Korean](docs/single_split_report.ko.md)
 - [Detailed methodology — Korean](docs/methodology.ko.md)
 - [Independent-environment reproduction record — Korean](docs/reproducibility.ko.txt)
 - [Annual metrics](results/walk_metrics.csv) and [weekdays-only sensitivity](results/walk_metrics_weekdays.csv)
 - [Single-split forecast and strategy comparison](results/forecast_vs_strategy.csv)
+
+</details>
 
 ## License
 
