@@ -56,7 +56,7 @@ I designed the validation and implemented it with AI coding assistants. Every re
 ## What was tested
 
 <details>
-<summary>펼쳐 보기</summary>
+<summary>Details (펼쳐 보기)</summary>
 
 1. **Price prediction:** Compare persistence, Ridge, Gradient Boosting, and GRU for next-observation corn, soybean, and soy/corn ratio prices.
 2. **Information timing:** Use historical price features and a conservatively delayed drought index; treat variables without verifiable release dates as diagnostic only.
@@ -85,7 +85,7 @@ The single-split study and the annual extension use different prediction targets
 ## Methodology
 
 <details>
-<summary>펼쳐 보기</summary>
+<summary>Details (펼쳐 보기)</summary>
 
 - **Observed dates** — intersect the two source price files and retain positive prices on shared dates.
 - **Information timing** — use trailing features; delay drought data by seven days after its Tuesday observation date. Inputs with unverified release dates are *exploratory diagnostics*, not trading inputs.
@@ -100,7 +100,7 @@ The single-split study and the annual extension use different prediction targets
 ## Run
 
 <details>
-<summary>펼쳐 보기</summary>
+<summary>Details (펼쳐 보기)</summary>
 
 Tested on Windows with Python 3.11.9 and CPU PyTorch.
 
@@ -140,7 +140,7 @@ Scripts write outputs under `results/`. For another input location, pass `--data
 ## Results and supporting documentation
 
 <details>
-<summary>펼쳐 보기</summary>
+<summary>Details (펼쳐 보기)</summary>
 
 - [Annual validation report — Korean](docs/annual_validation.ko.md)
 - [Original price and strategy evaluation — Korean](docs/single_split_report.ko.md)
